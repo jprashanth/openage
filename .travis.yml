@@ -1,6 +1,8 @@
 # travis ci config script for openage
 
 
+sudo: required
+dist: trusty
 language: cpp
 
 compiler:
@@ -28,28 +30,31 @@ matrix:
 before_install:
   - uname -a
   - lsb_release -a
-  - sudo add-apt-repository --yes ppa:ubuntu-toolchain-r/test     # newer toolchain
-  - sudo apt-add-repository --yes ppa:zoogie/sdl2-snapshots       # libsdl2
-  - sudo apt-add-repository --yes ppa:sfttech/random              # cmake, opus, epoxy, python3-* (3.4)
-  - sudo apt-add-repository --yes ppa:mapnik/nightly-trunk        # libharfbuzz
+#  - sudo add-apt-repository --yes ppa:ubuntu-toolchain-r/test     # newer toolchain
+#  - sudo apt-add-repository --yes ppa:zoogie/sdl2-snapshots       # libsdl2
+#  - sudo apt-add-repository --yes ppa:sfttech/random              # cmake, opus, epoxy, python3-* (3.4)
+#  - sudo apt-add-repository --yes ppa:mapnik/nightly-trunk        # libharfbuzz
+#  - sudo apt-get update -qq
+  - if [ "$CXX" = "g++" ]; then sudo add-apt-repository --yes ppa:ubuntu-toolchain-r/test; fi
   - sudo apt-get update -qq
 
 install:
   - export CVERSION="4.9"
-  - export PYVERSION="3.4"
-  - sudo apt-get install -qq g++-${CVERSION}  # also needed for newer stdlib
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-${CVERSION}" CC="gcc-${CVERSION}"; fi
+  - python --version
+#  - sudo apt-get install -qq g++-${CVERSION}  # also needed for newer stdlib
+#  - if [ "$CXX" = "g++" ]; then export CXX="g++-${CVERSION}" CC="gcc-${CVERSION}"; fi
+  - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-${CVERSION} && export CXX="g++-${CVERSION}" CC="gcc-${CVERSION}"; fi
   - export CC=`which $CC`
   - export CXX=`which $CXX`
-  - sudo apt-get remove -qq cmake  # remove the museum edition
-  - sudo apt-get install -qq python3 python3-dev libepoxy-dev libfreetype6-dev libfontconfig1-dev libharfbuzz-dev libsdl2-dev libsdl2-image-dev libopusfile-dev opus-tools cmake python3-numpy cython3 python3-pil python3-pygments clang
+#  - sudo apt-get remove -qq cmake  # remove the museum edition
+  - sudo apt-get install -qq libepoxy-dev libfreetype6-dev libfontconfig1-dev libharfbuzz-dev libsdl2-dev libsdl2-image-dev libopusfile-dev opus-tools cmake python3-numpy cython3 python3-pil python3-pygments
 
 # we install those from PyPi on purpose, because we always want the most recent linters available.
 # all other python packages should be properly backported to precise, and installed from the PPA.
   - wget -O /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py
-  - sudo -H python3 /tmp/get-pip.py
-  - sudo -H python3 -m pip install pep8
-  - sudo -H python3 -m pip install pylint
+  - sudo -H python /tmp/get-pip.py
+  - sudo -H python -m pip install pep8
+  - sudo -H python -m pip install pylint
 
 # this is required because software museum scan-build doesn't support --use-cc/--use-c++
   - sudo ln -sf "$CC" /usr/bin/gcc
@@ -58,13 +63,13 @@ install:
 before_script:
   - git pull --unshallow    # the full git history is required for 'make checkfull'
   - cmake --version
-  - python3 --version
-  - python3 -m cython --version
-  - python3 -c 'import pygments; print(pygments.__version__)'
-  - python3 -c 'import PIL; print(PIL.VERSION)'
-  - python3 -c 'import numpy; print(numpy.version.version)'
-  - python3 -m pep8 --version
-  - python3 -m pylint --version
+  - python --version
+  - python -m cython --version
+  - python -c 'import pygments; print(pygments.__version__)'
+  - python -c 'import PIL; print(PIL.VERSION)'
+  - python -c 'import numpy; print(numpy.version.version)'
+  - python -m pep8 --version
+  - python -m pylint --version
 
 script:
   - $STATICCHECKER ./configure --mode=debug
@@ -77,16 +82,16 @@ after_script:
 
 notifications:
   email:
-    on_success: change
-    on_failure: always
-  irc:
-    channels:
-      - "chat.freenode.net#sfttech"
-    template:
-      - "%{repository_slug}/%{branch} (%{commit} - %{author}): %{message}"
-      - "took %{duration}, moar info: %{build_url}"
-    use_notice: true
-    skip_join: true
+    on_success: never
+    on_failure: never
+#  irc:
+#    channels:
+#      - "chat.freenode.net#sfttech"
+#    template:
+#      - "%{repository_slug}/%{branch} (%{commit} - %{author}): %{message}"
+#      - "took %{duration}, moar info: %{build_url}"
+#    use_notice: true
+#    skip_join: true
 
 cache:
   directories:
